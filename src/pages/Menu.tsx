@@ -3,6 +3,7 @@ import MenuCard from "@/components/MenuCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter } from "lucide-react";
+import Navigation from "@/components/Navigation";
 
 // Mock data - in a real app, this would come from your database
 const menuItems = [
@@ -83,6 +84,7 @@ const Menu = () => {
 
   return (
     <div className="min-h-screen bg-gradient-warm">
+      <Navigation />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12 animate-fade-in">

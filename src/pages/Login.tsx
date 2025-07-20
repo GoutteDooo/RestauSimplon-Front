@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChefHat, User, Lock, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Navigation from "@/components/Navigation";
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +42,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-warm flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-warm">
+      <Navigation />
+      <div className="flex items-center justify-center p-4 pt-20">
       <div className="w-full max-w-md animate-fade-in">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -170,6 +173,7 @@ const Login = () => {
             </p>
           </CardFooter>
         </Card>
+      </div>
       </div>
     </div>
   );

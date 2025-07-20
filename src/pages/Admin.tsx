@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit, Trash2, Users, ShoppingBag, DollarSign, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Navigation from "@/components/Navigation";
 
 const Admin = () => {
   const [newItem, setNewItem] = useState({
@@ -67,6 +68,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-warm">
+      <Navigation />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8 animate-fade-in">
