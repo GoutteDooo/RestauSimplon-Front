@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,63 +7,250 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, Users, ShoppingBag, DollarSign, TrendingUp } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Edit, Trash2, Users, ShoppingBag, DollarSign, TrendingUp, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
+import { articlesApi, clientsApi, commandesApi, type Article, type Client, type Commande } from "@/lib/api";
 
 const Admin = () => {
-  const [newItem, setNewItem] = useState({
-    name: "",
+  // State for articles
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [newArticle, setNewArticle] = useState({
+    nom: "",
     description: "",
-    price: "",
-    category: ""
+    prix: 0,
+    categorie: "Entree" as Article['categorie'],
+    disponible: true,
+    commandeArticles: []
   });
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+
+  // State for clients
+  const [clients, setClients] = useState<Client[]>([]);
+  const [newClient, setNewClient] = useState({
+    nom: "",
+    prenom: "",
+    numeroRue: "",
+    nomRue: "",
+    ville: "",
+    codePostal: "",
+    telephone: "",
+    commandes: []
+  });
+
+  // State for commandes
+  const [commandes, setCommandes] = useState<Commande[]>([]);
+  const [nonLivreeCommandes, setNonLivreeCommandes] = useState<Commande[]>([]);
+
   const { toast } = useToast();
 
-  const handleAddItem = (e: React.FormEvent) => {
+  // Load data on component mount
+  useEffect(() => {
+    loadArticles();
+    loadClients();
+    loadCommandes();
+    loadNonLivreeCommandes();
+  }, []);
+
+  // Article functions
+  const loadArticles = async () => {
+    try {
+      const data = await articlesApi.getAll();
+      setArticles(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load articles",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAddArticle = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Menu item added!",
-      description: `${newItem.name} has been added to the menu.`,
-    });
-    setNewItem({ name: "", description: "", price: "", category: "" });
+    try {
+      await articlesApi.create(newArticle);
+      toast({
+        title: "Article ajouté!",
+        description: `${newArticle.nom} a été ajouté au menu.`,
+      });
+      setNewArticle({
+        nom: "",
+        description: "",
+        prix: 0,
+        categorie: "Entree",
+        disponible: true,
+        commandeArticles: []
+      });
+      loadArticles();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter l'article",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditArticle = async (article: Article) => {
+    if (!editingArticle || !article.id) return;
+    try {
+      await articlesApi.update(article.id, {
+        nom: article.nom,
+        description: article.description,
+        prix: article.prix,
+        categorie: article.categorie,
+        disponible: article.disponible,
+        commandeArticles: []
+      });
+      toast({
+        title: "Article modifié!",
+        description: `${article.nom} a été mis à jour.`,
+      });
+      setEditingArticle(null);
+      loadArticles();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier l'article",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteArticle = async (id: number) => {
+    try {
+      await articlesApi.delete(id);
+      toast({
+        title: "Article supprimé!",
+        description: "L'article a été supprimé du menu.",
+      });
+      loadArticles();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'article",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Client functions
+  const loadClients = async () => {
+    try {
+      const data = await clientsApi.getAll();
+      setClients(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load clients",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAddClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await clientsApi.create(newClient);
+      toast({
+        title: "Client ajouté!",
+        description: `${newClient.prenom} ${newClient.nom} a été ajouté.`,
+      });
+      setNewClient({
+        nom: "",
+        prenom: "",
+        numeroRue: "",
+        nomRue: "",
+        ville: "",
+        codePostal: "",
+        telephone: "",
+        commandes: []
+      });
+      loadClients();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le client",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Commande functions
+  const loadCommandes = async () => {
+    try {
+      const data = await commandesApi.getAll();
+      setCommandes(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load commandes",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const loadNonLivreeCommandes = async () => {
+    try {
+      const data = await commandesApi.getNonLivrees();
+      setNonLivreeCommandes(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load pending orders",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleMarkAsDelivered = async (id: number) => {
+    try {
+      await commandesApi.markAsDelivered(id);
+      toast({
+        title: "Commande livrée!",
+        description: "La commande a été marquée comme livrée.",
+      });
+      loadNonLivreeCommandes();
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de marquer la commande comme livrée",
+        variant: "destructive"
+      });
+    }
   };
 
   const statsCards = [
     {
-      title: "Total Orders",
-      value: "324",
+      title: "Total Articles",
+      value: articles.length.toString(),
       icon: ShoppingBag,
       trend: "+12%",
       color: "text-primary"
     },
     {
-      title: "Revenue",
-      value: "$8,234",
-      icon: DollarSign,
+      title: "Total Clients",
+      value: clients.length.toString(),
+      icon: Users,
       trend: "+8%",
       color: "text-golden"
     },
     {
-      title: "Customers",
-      value: "156",
-      icon: Users,
+      title: "Commandes en Attente",
+      value: nonLivreeCommandes.length.toString(),
+      icon: DollarSign,
       trend: "+15%",
       color: "text-deep-orange"
     },
     {
-      title: "Growth",
-      value: "23%",
+      title: "Total Commandes",
+      value: commandes.length.toString(),
       icon: TrendingUp,
       trend: "+3%",
       color: "text-primary"
     }
-  ];
-
-  const recentOrders = [
-    { id: "001", customer: "John Doe", items: "Grilled Salmon, Caesar Salad", total: "$43.98", status: "Preparing" },
-    { id: "002", customer: "Jane Smith", items: "Truffle Risotto", total: "$24.99", status: "Ready" },
-    { id: "003", customer: "Mike Johnson", items: "Beef Tenderloin, Chocolate Cake", total: "$48.98", status: "Delivered" },
   ];
 
   return (
@@ -103,88 +290,113 @@ const Admin = () => {
               ))}
             </div>
 
-            {/* Recent Orders */}
+            {/* Pending Orders */}
             <Card className="bg-gradient-card shadow-elegant">
               <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Latest customer orders</CardDescription>
+                <CardTitle>Commandes en Attente</CardTitle>
+                <CardDescription>Commandes non livrées</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {recentOrders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-4 rounded-lg bg-background/50">
-                      <div>
-                        <p className="font-medium">{order.customer}</p>
-                        <p className="text-sm text-muted-foreground">{order.items}</p>
+                {nonLivreeCommandes.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Aucune commande en attente</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {nonLivreeCommandes.map((commande) => (
+                      <div key={commande.id} className="flex items-center justify-between p-4 rounded-lg bg-background/50">
+                        <div>
+                          <p className="font-medium">Commande #{commande.id}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Client: {commande.idClient} | Type: {commande.type}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Articles: {commande.idArticles.join(', ')}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => commande.id && handleMarkAsDelivered(commande.id)}
+                          size="sm"
+                          variant="outline"
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Marquer livrée
+                        </Button>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium">{order.total}</p>
-                        <Badge variant={order.status === "Ready" ? "default" : "secondary"}>
-                          {order.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="menu" className="animate-slide-up">
+          <TabsContent value="menu" className="animate-slide-up space-y-6">
+            {/* Add new article form */}
             <Card className="bg-gradient-card shadow-elegant">
               <CardHeader>
-                <CardTitle>Add New Menu Item</CardTitle>
-                <CardDescription>Add delicious new dishes to your menu</CardDescription>
+                <CardTitle>Ajouter un Article</CardTitle>
+                <CardDescription>Ajoutez de nouveaux plats au menu</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleAddItem} className="space-y-4">
+                <form onSubmit={handleAddArticle} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Dish Name</Label>
+                      <Label htmlFor="nom">Nom du Plat</Label>
                       <Input
-                        id="name"
-                        value={newItem.name}
-                        onChange={(e) => setNewItem({...newItem, name: e.target.value})}
-                        placeholder="Enter dish name"
+                        id="nom"
+                        value={newArticle.nom}
+                        onChange={(e) => setNewArticle({...newArticle, nom: e.target.value})}
+                        placeholder="Entrez le nom du plat"
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="price">Price</Label>
+                      <Label htmlFor="prix">Prix (€)</Label>
                       <Input
-                        id="price"
+                        id="prix"
                         type="number"
                         step="0.01"
-                        value={newItem.price}
-                        onChange={(e) => setNewItem({...newItem, price: e.target.value})}
+                        value={newArticle.prix}
+                        onChange={(e) => setNewArticle({...newArticle, prix: parseFloat(e.target.value) || 0})}
                         placeholder="0.00"
                         required
                       />
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select value={newItem.category} onValueChange={(value) => setNewItem({...newItem, category: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="appetizer">Appetizer</SelectItem>
-                        <SelectItem value="main">Main Course</SelectItem>
-                        <SelectItem value="dessert">Dessert</SelectItem>
-                        <SelectItem value="beverage">Beverage</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="categorie">Catégorie</Label>
+                      <Select value={newArticle.categorie} onValueChange={(value: Article['categorie']) => setNewArticle({...newArticle, categorie: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner une catégorie" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Entree">Entrée</SelectItem>
+                          <SelectItem value="Plat">Plat Principal</SelectItem>
+                          <SelectItem value="Dessert">Dessert</SelectItem>
+                          <SelectItem value="Boisson">Boisson</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2 flex items-center gap-2">
+                      <Checkbox
+                        id="disponible"
+                        checked={newArticle.disponible}
+                        onCheckedChange={(checked) => setNewArticle({...newArticle, disponible: checked as boolean})}
+                      />
+                      <Label htmlFor="disponible">Disponible</Label>
+                    </div>
                   </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="description">Description</Label>
                     <Textarea
                       id="description"
-                      value={newItem.description}
-                      onChange={(e) => setNewItem({...newItem, description: e.target.value})}
-                      placeholder="Describe this delicious dish..."
+                      value={newArticle.description}
+                      onChange={(e) => setNewArticle({...newArticle, description: e.target.value})}
+                      placeholder="Décrivez ce délicieux plat..."
                       rows={3}
                       required
                     />
@@ -192,47 +404,245 @@ const Admin = () => {
                   
                   <Button type="submit" variant="primary" className="w-full">
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Menu Item
+                    Ajouter l'Article
                   </Button>
                 </form>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="orders" className="animate-slide-up">
+            {/* Articles list */}
             <Card className="bg-gradient-card shadow-elegant">
               <CardHeader>
-                <CardTitle>Order Management</CardTitle>
-                <CardDescription>View and manage customer orders</CardDescription>
+                <CardTitle>Articles du Menu</CardTitle>
+                <CardDescription>Gérez vos articles existants</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg text-muted-foreground">
-                    Connect to Supabase to manage real orders
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    This feature requires database integration
-                  </p>
-                </div>
+                {articles.length === 0 ? (
+                  <div className="text-center py-8">
+                    <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Aucun article dans le menu</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {articles.map((article) => (
+                      <div key={article.id} className="flex items-center justify-between p-4 rounded-lg bg-background/50">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-medium">{article.nom}</h3>
+                            <Badge variant={article.disponible ? "default" : "secondary"}>
+                              {article.disponible ? "Disponible" : "Indisponible"}
+                            </Badge>
+                            <Badge variant="outline">{article.categorie}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-1">{article.description}</p>
+                          <p className="font-bold text-primary">{article.prix}€</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingArticle(article)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => article.id && handleDeleteArticle(article.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="animate-slide-up">
+          <TabsContent value="orders" className="animate-slide-up space-y-6">
+            {/* All orders */}
             <Card className="bg-gradient-card shadow-elegant">
               <CardHeader>
-                <CardTitle>Restaurant Settings</CardTitle>
-                <CardDescription>Configure your restaurant preferences</CardDescription>
+                <CardTitle>Toutes les Commandes</CardTitle>
+                <CardDescription>Gérez toutes les commandes du restaurant</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <p className="text-lg text-muted-foreground">
-                    Settings panel coming soon
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Configure operating hours, delivery zones, and more
-                  </p>
+                {commandes.length === 0 ? (
+                  <div className="text-center py-8">
+                    <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Aucune commande trouvée</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {commandes.map((commande) => (
+                      <div key={commande.id} className="flex items-center justify-between p-4 rounded-lg bg-background/50">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-medium">Commande #{commande.id}</h3>
+                            <Badge variant="outline">{commande.type}</Badge>
+                            <Badge variant={commande.EstLivree ? "default" : "secondary"}>
+                              {commande.EstLivree ? "Livrée" : "En attente"}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Client: {commande.idClient} | Articles: {commande.idArticles.join(', ')}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          {!commande.EstLivree && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => commande.id && handleMarkAsDelivered(commande.id)}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Marquer livrée
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => commande.id && commandesApi.delete(commande.id).then(loadCommandes)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="animate-slide-up space-y-6">
+            {/* Client Management */}
+            <Card className="bg-gradient-card shadow-elegant">
+              <CardHeader>
+                <CardTitle>Gestion des Clients</CardTitle>
+                <CardDescription>Ajoutez et gérez vos clients</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Add new client form */}
+                <form onSubmit={handleAddClient} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="prenom">Prénom</Label>
+                      <Input
+                        id="prenom"
+                        value={newClient.prenom}
+                        onChange={(e) => setNewClient({...newClient, prenom: e.target.value})}
+                        placeholder="Prénom du client"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="nom">Nom</Label>
+                      <Input
+                        id="nom"
+                        value={newClient.nom}
+                        onChange={(e) => setNewClient({...newClient, nom: e.target.value})}
+                        placeholder="Nom du client"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="numeroRue">Numéro</Label>
+                      <Input
+                        id="numeroRue"
+                        value={newClient.numeroRue}
+                        onChange={(e) => setNewClient({...newClient, numeroRue: e.target.value})}
+                        placeholder="123"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="nomRue">Rue</Label>
+                      <Input
+                        id="nomRue"
+                        value={newClient.nomRue}
+                        onChange={(e) => setNewClient({...newClient, nomRue: e.target.value})}
+                        placeholder="Nom de la rue"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="codePostal">Code Postal</Label>
+                      <Input
+                        id="codePostal"
+                        value={newClient.codePostal}
+                        onChange={(e) => setNewClient({...newClient, codePostal: e.target.value})}
+                        placeholder="75001"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ville">Ville</Label>
+                      <Input
+                        id="ville"
+                        value={newClient.ville}
+                        onChange={(e) => setNewClient({...newClient, ville: e.target.value})}
+                        placeholder="Paris"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="telephone">Téléphone</Label>
+                      <Input
+                        id="telephone"
+                        type="tel"
+                        value={newClient.telephone}
+                        onChange={(e) => setNewClient({...newClient, telephone: e.target.value})}
+                        placeholder="01 23 45 67 89"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button type="submit" variant="primary" className="w-full">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ajouter le Client
+                  </Button>
+                </form>
+
+                {/* Clients list */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Clients Existants</h3>
+                  {clients.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">Aucun client enregistré</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {clients.map((client) => (
+                        <div key={client.id} className="flex items-center justify-between p-4 rounded-lg bg-background/50">
+                          <div className="flex-1">
+                            <h4 className="font-medium">{client.prenom} {client.nom}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {client.numeroRue} {client.nomRue}, {client.codePostal} {client.ville}
+                            </p>
+                            <p className="text-sm text-muted-foreground">{client.telephone}</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => client.id && clientsApi.delete(client.id).then(loadClients)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
