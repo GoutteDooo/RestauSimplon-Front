@@ -39,7 +39,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 animate-fade-in">
             <h2 className="text-4xl font-bold text-foreground mb-4">
-              Why Choose Saveur?
+              Why Choose RestauSimplon?
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               We're committed to delivering an extraordinary culinary experience
@@ -68,7 +68,7 @@ const Index = () => {
       <section className="py-20 bg-gradient-warm">
         <div className="container mx-auto px-4 text-center animate-fade-in">
           <h2 className="text-4xl font-bold text-foreground mb-6">
-            Ready to Experience Saveur?
+            Ready to Experience RestauSimplon?
           </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Join us for an unforgettable dining experience. Browse our menu or make a reservation today.

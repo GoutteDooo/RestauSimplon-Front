@@ -27,7 +27,7 @@ const HeroSection = () => {
         <h1 className="text-5xl md:text-7xl font-bold text-cream mb-6 leading-tight">
           Welcome to{" "}
           <span className="text-transparent bg-gradient-hero bg-clip-text">
-            Saveur
+            RestauSimplon
           </span>
         </h1>
         

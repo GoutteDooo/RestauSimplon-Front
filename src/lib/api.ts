@@ -1,5 +1,5 @@
 // API base URL - adjust this to match your backend
-const API_BASE_URL = 'http://localhost:8000'; // or your server URL
+const API_BASE_URL = 'https://localhost:7287'; // or your server URL
 
 // Article types
 export interface Article {
@@ -26,12 +26,19 @@ export interface Client {
 }
 
 // Commande types
+export interface ArticleCommande {
+  idArticle: number;
+  nomArticle: string;
+  prixArticle: number;
+  quantite: number;
+}
 export interface Commande {
   id?: number;
-  idArticles: number[];
-  idClient: number;
+  articles: ArticleCommande[];  // nouvelle propriété correcte
+  clientId: number;
   type: 'SurPlace' | 'AEmporter' | 'Livraison';
-  EstLivree?: boolean;
+  estLivree?: boolean;
+  prixTotal?: number;
 }
 
 // API functions for articles

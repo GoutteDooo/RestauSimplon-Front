@@ -183,6 +183,7 @@ const Admin = () => {
     try {
       const data = await commandesApi.getAll();
       setCommandes(data);
+      console.log("Commandes loaded:", data);
     } catch (error) {
       toast({
         title: "Error",
@@ -196,6 +197,7 @@ const Admin = () => {
     try {
       const data = await commandesApi.getNonLivrees();
       setNonLivreeCommandes(data);
+      console.log("Non-livrees:", data);
     } catch (error) {
       toast({
         title: "Error",
@@ -304,15 +306,26 @@ const Admin = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {nonLivreeCommandes.map((commande) => (
+                    {nonLivreeCommandes && nonLivreeCommandes.map((commande) => (
                       <div key={commande.id} className="flex items-center justify-between p-4 rounded-lg bg-background/50">
                         <div>
                           <p className="font-medium">Commande #{commande.id}</p>
                           <p className="text-sm text-muted-foreground">
-                            Client: {commande.idClient} | Type: {commande.type}
+                            Client: {commande.clientId} |
+                            Type: {commande.type}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            Articles: {commande.idArticles.join(', ')}
+                            Articles:
+                          </p>
+                          <ul className="text-sm text-muted-foreground ml-4 list-disc">
+                            {commande.articles.map((article) => (
+                              <li key={article.idArticle}>
+                                {article.nomArticle} — {article.quantite} × {article.prixArticle}€
+                              </li>
+                            ))}
+                          </ul>
+                          <p className="text-sm text-muted-foreground">
+                            Total: {commande.prixTotal}€
                           </p>
                         </div>
                         <Button
@@ -320,8 +333,7 @@ const Admin = () => {
                           size="sm"
                           variant="outline"
                         >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Marquer livrée
+                          Marquer comme livrée
                         </Button>
                       </div>
                     ))}
@@ -482,16 +494,19 @@ const Admin = () => {
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="font-medium">Commande #{commande.id}</h3>
                             <Badge variant="outline">{commande.type}</Badge>
-                            <Badge variant={commande.EstLivree ? "default" : "secondary"}>
-                              {commande.EstLivree ? "Livrée" : "En attente"}
+                            <Badge variant={commande.estLivree ? "default" : "secondary"}>
+                              {commande.estLivree ? "Livrée" : "En attente"}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            Client: {commande.idClient} | Articles: {commande.idArticles.join(', ')}
+                            Client: {commande.clientId} | Articles: {commande.articles.map((article) => article.nomArticle).join(', ')}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Total: {commande.prixTotal}€
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          {!commande.EstLivree && (
+                          {!commande.estLivree && (
                             <Button
                               size="sm"
                               variant="outline"
